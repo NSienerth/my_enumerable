@@ -4,7 +4,7 @@
 module Enumerable
 
   def my_each
-    return self.to_enum(:my_each) unless block_given?
+    return to_enum(:my_each) unless block_given?
 
     for k, v in self
       yield v.nil? ? k : [k, v]
@@ -12,7 +12,7 @@ module Enumerable
   end
 
   def my_each_with_index
-    return self.to_enum(:my_each_with_index) unless block_given?
+    return to_enum(:my_each_with_index) unless block_given?
 
     index = 0
     for k, v in self
@@ -70,5 +70,31 @@ module Enumerable
     return my_select(&my_block).size if block_given?
 
     size
+  end
+
+  def my_map(my_proc = nil)
+    return to_enum(:my_map) unless block_given? || my_proc
+
+    result = []
+    if my_proc
+      my_each { |item| result.push(my_proc.call(item)) }
+    else
+      my_each { |item| result.push(yield item) }
+    end
+    result
+  end
+
+  def my_inject(memo = nil, mod = nil)
+    return to_enum(:my_inject) unless block_given? || mod.is_a?(Symbol) || memo.is_a?(Symbol)
+
+    mod, memo = memo, mod if memo.is_a?(Symbol)
+    collection = to_a
+    memo ||= collection.shift
+    if mod
+      collection.my_each { |k| memo = memo.send(mod, k) }
+    else
+      collection.my_each { |k| memo = yield(memo, k) }
+    end
+    memo
   end
 end
